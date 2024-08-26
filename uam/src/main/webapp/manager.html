@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard</title>
+    <style>
+       body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            
+            background: #f0f2f5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table, th, td {
+            border: none;
+        }
+
+        th, td {
+            padding: 10px 15px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #333;
+            color: white;
+            font-size: 18px;
+        }
+
+        td {
+            background: #f9f9f9;  
+            font-size: 16px;
+            
+        }
+
+        tr:nth-child(even) td {
+            background: #e9e9e9;
+        }
+
+        tr:hover td {
+            background: #d3d3d3;
+            transition: background 0.3s;
+        }
+
+        .accept-button {
+            background-color: #4CAF50; /* Green background */
+        }
+
+        .reject-button {
+            background-color: #f44336; /* Red background */
+        }
+        .hidden {
+    display: none;
+}
+ 		button {
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s, transform 0.2s;
+            display: inline-block;
+            margin-right: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .navbar {
+            background: linear-gradient(to right, #3a3a3a, #606060);
+            overflow: hidden;
+            padding: 10px 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 12px 20px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s, color 0.3s;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: #333;
+        }
+        .navbar .logout {
+            float: right;
+            background-color: #f44336;
+            color: white;
+            border-radius: 4px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .navbar .logout:hover {
+            background-color: #e53935;
+            color: white;
+        }
+        
+
+        .username {
+            margin-top: 100px; /* Space below the navbar */
+            margin-left: 20px; /* Space from the left */
+            color: black;
+            font-size: 24px;
+            position: absolute; /* Positioning it absolutely */
+            top: 10px;
+            left: 20px;
+        }
+
+      /*   .content {
+            margin-top: 110px; 
+    		display: flex;
+    		justify-content: center;
+    		width: 100%;
+    		padding: 20px;
+    		box-sizing: border-box;
+            
+        } */
+        .content {
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: white;
+            margin: 100px auto;
+            max-width: 1200px;
+            font-size: 16px;
+        }
+
+       
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+
+        .form-container {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .form-container input[type="text"],
+        .form-container select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .form-container input[type="submit"] {
+            background: linear-gradient(45deg, #ff6b6b, #f7c6c7);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .form-container input[type="submit"]:hover {
+            background: linear-gradient(45deg, #ff6b6b, #ff4757);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transform: scale(1.05);
+        }
+
+        .btn-green {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-green:hover {
+            background-color: darkgreen;
+        }
+
+        .form-container .dropdown {
+            margin-bottom: 10px;
+        }
+
+        .message {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .team-members {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .add-button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .add-button:hover {
+            background: linear-gradient(45deg, #0056b3, #003d7a);
+            transform: scale(1.05);
+        }
+
+        .navbar .logout {
+            float: right;
+            background-color: #f44336; /* Red background */
+            color: white;
+            border-radius: 4px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .navbar .logout:hover {
+            background-color: #e53935; /* Darker red on hover */
+            color: white;
+        }
+        
+    /* Styles for Pending Requests */
+    .pending-button {
+        background-color: #FFA500; /* Yellowish Orange */
+        
+    }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <a href="#" onclick="toggleContent('showTeam', fetchTeamMembers)">Show Team</a>
+        <a href="#" onclick="toggleContent('addToTeam', loadAvailableUsers)">Add to Team</a>
+        <a href="#" onclick="toggleContent('checkResources', fetchManagerResources)">Check Resources</a>
+        <a href="#" onclick="toggleContent('requestResources', requestResources)">Request New Resources</a>
+        <a href="#" onclick="toggleContent('requestForManager')">Request For Admin</a>
+        <a href="#" onclick="toggleContent('accepted-resources', loadAccepted)">Check Approvals</a> 
+        <a href="#" onclick="toggleContent('remove-resource-user-content', loadRemoveResourceUser)">Remove Own Resources</a>
+        <a href="#change-password" onclick="toggleContent('change-password-content', loadChangePasswordForm)">Change Password</a> 
+        
+		<a href="#" class="logout" onclick="logout()">Logout</a>
+    </div>
+
+    <!-- Welcome Message -->
+    <h2 class="username">Welcome Manager -  <span id="manager-username"></span>!</h2>
+
+    <!-- Content Container -->
+    
+        <div class="content hidden" id="showTeam">
+            <div class="form-container">
+                <p>Team Members:</p>
+                <div id="team-members" class="team-members"></div>
+            </div>
+        </div>
+      
+
+       
+     <div id="addToTeam" class="content hidden">
+            <div class="form-container">
+                <p>Available Users to Add:</p>
+                <table id="available-users-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="available-users-table-body">
+                        <!-- Rows will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="checkResources" class="content hidden">
+    <div class="form-container">
+        <h3>Your Resources:</h3>
+        <div id="resources-list"></div>
+    </div>
+</div>
+
+        <div id="requestResources" class="content hidden">
+           <!--  <div class="form-container">
+                <form action="webapi/myresource/requestResources" method="post">
+                    <input type="text" name="resourceName" placeholder="Resource Name" required><br>
+                    <input type="submit" value="Request New Resources">
+                </form>
+            </div> -->
+          
+        <table>
+            <thead>
+                <tr>
+                    <th>Resource Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="request-resources">
+                <!-- Resources will be loaded here -->
+            </tbody>
+        </table>
+        </div>
+        	<div id="requestForManager" class="content hidden">
+            <div class="form-container">
+                <form action="webapi/myresource/requestRole" method="post">
+                    <input type="text" name="requestedRole" placeholder="Admin" required><br>
+                    <input type="submit" value="Request for Admin">
+                </form>
+            </div>
+        </div>
+
+        <div id="accepted-resources" class="content hidden">
+           <h2>Your Accepted Resources</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Request Type</th>
+                    <th>Request Value</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="accepted-table-body">
+               
+            </tbody>
+        </table>
+        </div> 
+
+        <div id="remove-resource-user-content" class="content hidden">
+             <h2>Remove own Resources</h2>
+        <table>
+            <thead>
+                <tr>
+                   
+                    <th>Resource</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="remove-resource-user-table-body">
+                <!-- Data will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+      <!-- Change Password Section -->
+   
+ <div id="change-password-content" class="content hidden">
+        <!-- Content will be dynamically added by loadChangePasswordForm function -->
+    </div>
+    
+
+    <script>
+    /* function showSection(sectionId) {
+        const sections = document.querySelectorAll('.dashboard-container');
+        sections.forEach(section => section.style.display = 'none'); 
+        document.getElementById(sectionId).style.display = 'block';
+
+      
+        if (sectionId === 'showTeam') {
+            fetchTeamMembers();
+        } else if (sectionId === 'addToTeam') {
+            loadAvailableUsers(); 
+        
+    } else if (sectionId === 'checkResources') {
+        fetchManagerResources(); 
+    }
+    else if(sectionId === 'requests-content'){
+    	loadRequests();
+    }
+    else if(sectionId === 'remove-resource-user-content'){
+    	loadRemoveResourceUser();
+    }
+    } */
+    function toggleContent(contentId, loadFunction = null) {
+        const contents = document.querySelectorAll('.content');
+        contents.forEach(content => {
+            if (content.id === contentId) {
+                content.classList.remove('hidden');
+                if (loadFunction) {
+                    loadFunction();
+                }
+            } else {
+                content.classList.add('hidden');
+            }
+        });
+    }
+        function fetchTeamMembers() {
+            fetch('/uam/webapi/myresource/showTeam', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+            	if (response.status === 401) {
+                    // Handle unauthorized response (session expired or not logged in)
+                    alert('Session expired or not logged in. Please log in again.');
+                    // Optionally, redirect to login page
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Adjust URL as needed
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                const teamMembersDiv = document.getElementById('team-members');
+                teamMembersDiv.innerHTML = ''; // Clear previous data
+                if (data.length > 0) {
+                    data.forEach(member => {
+                        const memberElement = document.createElement('div');
+                        memberElement.textContent = member;
+                        teamMembersDiv.appendChild(memberElement);
+                    });
+                } else {
+                    teamMembersDiv.textContent = 'No team members found.';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching team members:', error);
+                document.getElementById('team-members').textContent = 'Error fetching team members. Please try again later.';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            displayUsername();
+        });
+
+        function displayUsername() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+            if (username) {
+                document.getElementById('manager-username').textContent = username;
+                // Optionally set managerID in sessionStorage here if not set elsewhere
+                sessionStorage.setItem('managerID', username); // Assuming username is being used as managerID
+            } else {
+                document.getElementById('manager-username').textContent = 'Manager'; // Default text
+            }
+        }
+        async function loadAccepted() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/accepted');
+                if (response.status === 401) {
+                    // Handle unauthorized response (session expired or not logged in)
+                    alert('Session expired or not logged in. Please log in again.');
+                    // Optionally, redirect to login page
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Adjust URL as needed
+                    return;
+                }
+                const requests = await response.json();
+                console.log('Requests:', requests);
+
+                const acceptedTableBody = document.getElementById('accepted-table-body');
+                acceptedTableBody.innerHTML = ''; // Clear existing content
+
+                requests.forEach(request => {
+                    let statusText = '';
+                    let buttonClass = '';
+                    
+                    if (request.status) { // true means status is 1
+                        if (request.approved) { // true means approved = 1
+                            statusText = 'Accepted';
+                            buttonClass = 'accept-button';
+                        } else { // approved = 0
+                            statusText = 'Rejected';
+                            buttonClass = 'reject-button';
+                        }
+                    } else { // status = false means status = 0
+                        statusText = 'Pending';
+                        buttonClass = 'pending-button';
+                    }
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${request.requestType}</td>
+                        <td>${request.requestValue}</td>
+                        <td><button class="${buttonClass}">${statusText}</button></td>
+                    `;
+                    acceptedTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading requests:', error);
+            }
+        }
+
+        async function loadAvailableUsers() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/getNullUsers');
+                if (response.status === 401) {
+                    // Handle unauthorized response (session expired or not logged in)
+                    alert('Session expired or not logged in. Please log in again.');
+                    // Optionally, redirect to login page
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Adjust URL as needed
+                    return;
+                }
+                const users = await response.json();
+                console.log('Available Users:', users);
+
+                const tableBody = document.getElementById('available-users-table-body');
+                tableBody.innerHTML = ''; // Clear existing content
+
+                if (users.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="2">No available users to add.</td></tr>';
+                } else {
+                    users.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user}</td>
+                            <td>
+                                <form action="/uam/webapi/myresource/addToTeam" method="POST" style="display:inline;">
+                                    <input type="hidden" name="username" value="${user}">
+                                    <button type="submit" class="add-button">Add to Team</button>
+                                </form>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading available users:', error);
+            }
+        }
+        
+        async function fetchManagerResources() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/getManagerResources');
+                if (response.status === 401) {
+                    // Handle unauthorized response (session expired or not logged in)
+                    alert('Session expired or not logged in. Please log in again.');
+                    // Optionally, redirect to login page
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Adjust URL as needed
+                    return;
+                }
+                const resources = await response.json();
+                console.log('Manager Resources:', resources);
+
+                const resourcesListDiv = document.getElementById('resources-list');
+                resourcesListDiv.innerHTML = ''; // Clear existing content
+
+                if (resources.length === 0) {
+                    resourcesListDiv.innerHTML = '<p>No resources found.</p>';
+                } else {
+                    const list = document.createElement('ul');
+                    resources.forEach(resource => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = resource;
+                        list.appendChild(listItem);
+                    });
+                    resourcesListDiv.appendChild(list);
+                }
+            } catch (error) {
+                console.error('Error fetching manager resources:', error);
+                document.getElementById('resources-list').innerHTML = '<p>Error fetching resources. Please try again later.</p>';
+            }
+        }
+        async function requestResources() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/fetchResources');
+                if (response.status === 401) {
+                    // Handle unauthorized response (session expired or not logged in)
+                    alert('Session expired or not logged in. Please log in again.');
+                    // Optionally, redirect to login page
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Adjust URL as needed
+                    return;
+                }
+                const userResources = await response.json();
+
+                const tableBody = document.getElementById('request-resources');
+                tableBody.innerHTML = '';
+                
+                userResources.forEach(userResource => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                      
+                        <td>${userResource}</td>
+                        <td>
+                            <form action="webapi/myresource/requestResources" method="POST" style="display:inline;">
+                                <input type="hidden" name="resourceName" value="${userResource}">
+                                <button type="submit" class="accept-button">Request</button>
+                                </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading user resources:', error);
+            }
+        }
+
+        /* async function loadRequests() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/requests');
+                const requests = await response.json();
+                console.log('Requests:', requests);
+
+                const tableBody = document.getElementById('requests-table-body');
+                tableBody.innerHTML = ''; // Clear existing content
+
+                requests.forEach(request => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${request.username}</td>
+                        <td>${request.requestType}</td>
+                        <td>${request.requestValue}</td>
+                        <td>
+                            <form action="/uam/webapi/myresource/request/accept" method="POST" style="display:inline;">
+                                <input type="hidden" name="username" value="${request.username}">
+                                <input type="hidden" name="requestType" value="${request.requestType}">
+                                <input type="hidden" name="requestValue" value="${request.requestValue}">
+                                <button type="submit" class="accept-button">Accept</button>
+                            </form>
+                            <form action="/uam/webapi/myresource/request/reject" method="POST" style="display:inline;">
+                                <input type="hidden" name="username" value="${request.username}">
+                                <input type="hidden" name="requestType" value="${request.requestType}">
+                                <input type="hidden" name="requestValue" value="${request.requestValue}">
+                                <button type="submit" class="reject-button">Reject</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading requests:', error);
+            }
+        } */
+        async function loadRemoveResourceUser() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/getManagerResources');
+                if (response.status === 401) {
+                    // Handle unauthorized response (session expired or not logged in)
+                    alert('Session expired or not logged in. Please log in again.');
+                    // Optionally, redirect to login page
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Adjust URL as needed
+                    return;
+                }
+                const managerResources = await response.json();
+                const tableBody = document.getElementById('remove-resource-user-table-body');
+                tableBody.innerHTML = ''; // Clear previous content
+
+                if (managerResources.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="2">No resources found.</td></tr>';
+                } else {
+                    managerResources.forEach(resource => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${resource}</td>
+                            <td>
+                                <form action="/uam/webapi/myresource/resourceRemove" method="POST" style="display:inline;">
+                                    <input type="hidden" name="resourceName" value="${resource}">
+                                    <button type="submit" class="reject-button">Remove</button>
+                                </form>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading user resources:', error);
+                document.getElementById('remove-resource-user-table-body').innerHTML = '<tr><td colspan="2">Error loading resources. Please try again later.</td></tr>';
+            }
+        }
+        function logout() {
+            fetch('/uam/webapi/myresource/logout', {
+                method: 'POST',
+                credentials: 'include' // Ensure cookies (like session cookies) are sent with the request
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/uam'; // Redirect to the home page or login page after logout
+                } else {
+                    console.error('Logout failed');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        function loadChangePasswordForm() {
+            const content = document.getElementById('change-password-content');
+            content.innerHTML = `
+                <form id="change-password-form" onsubmit="changePassword(event)">
+                    <label for="new-password">New Password:</label>
+                    <input type="password" id="new-password" name="newPassword" required>
+                    <label for="confirm-new-password">Confirm New Password:</label>
+                    <input type="password" id="confirm-new-password" name="confirmNewPassword" required>
+                    <button type="submit" class="btn-green">Submit</button>
+                </form>
+                <div id="change-password-response"></div>
+            `;
+        }
+
+        async function changePassword(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const newPassword = document.getElementById('new-password').value;
+            const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+            if (newPassword !== confirmNewPassword) {
+                document.getElementById('change-password-response').innerText = 'Passwords do not match.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/uam/webapi/myresource/changepassword', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ newPassword })
+                });
+
+                const jsonResponse = await response.json();
+
+                if (response.status === 401 && jsonResponse.redirect) {
+                    window.location.href = jsonResponse.url; // Redirect if session expired
+                } else if (jsonResponse.success) {
+                    window.location.href = jsonResponse.url; // Redirect on success
+                } else {
+                    document.getElementById('change-password-response').innerText = jsonResponse.error || 'Failed to change password.';
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                document.getElementById('change-password-response').innerText = 'Failed to change password.';
+            }
+        }
+
+        </script>
+</body>
+</html>

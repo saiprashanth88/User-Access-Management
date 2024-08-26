@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            
+            background: #f0f2f5;
+        }
+
+        .navbar {
+            background: linear-gradient(to right, #3a3a3a, #606060);
+            overflow: hidden;
+            padding: 10px 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 12px 20px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s, color 0.3s;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .navbar a:hover {
+            background: #ddd;
+            color: #333;
+        }
+
+        .navbar .logout {
+            float: right;
+            background-color: #f44336;
+            color: white;
+            border-radius: 4px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .navbar .logout:hover {
+            background-color: #e53935;
+            color: white;
+        }
+
+        .content {
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: white;
+            margin: 30px auto;
+            max-width: 1200px;
+            font-size: 16px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 15px 20px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #333;
+            color: white;
+            font-size: 18px;
+        }
+
+        td {
+            background: #f9f9f9;
+            font-size: 16px;
+        }
+
+        tr:nth-child(even) td {
+            background: #e9e9e9;
+        }
+
+        tr:hover td {
+            background: #d3d3d3;
+            transition: background 0.3s;
+        }
+
+        button {
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s, transform 0.2s;
+            display: inline-block;
+            margin-right: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .accept-button {
+            background-color: #4CAF50;
+        }
+
+        .reject-button {
+            background-color: #f44336;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .form-inline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-inline input[type="text"] {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            flex-grow: 1;
+            font-size: 16px;
+        }
+
+        .btn-green {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 16px;
+        }
+
+        .btn-green:hover {
+            background-color: darkgreen;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            flex-grow: 1;
+            font-size: 16px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        #user-resources-content,
+        #resource-users-content {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: #f7f7f7;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <a href="#show-requests" onclick="toggleContent('requests-content', loadRequests)">Show Requests</a>
+        <a href="#remove-resource-db" onclick="toggleContent('remove-resource-db-content', loadResources)">Remove
+            Resource from DB</a>
+        <a href="#add-resource-db" onclick="toggleContent('add-resource-db-content', loadAddResourceForm)">Add Resource
+            to DB</a>
+        <a href="#remove-resource-user"
+            onclick="toggleContent('remove-resource-user-content', loadRemoveResourceUser)">Remove Resource from
+            User</a>
+        <a href="#check-users-resource"
+   onclick="toggleContent('check-users-resource-content')">Check Resources of a User</a>
+        <a href="#check-resources-user"
+            onclick="toggleContent('check-resources-user-content')">Check Users of a Resource</a>
+        <a href="#view-users" onclick="toggleContent('view-users-content', loadUsers)">View Users</a>
+        <a href="/uam/addUser.jsp">Add User</a>
+<a href="#change-password" onclick="toggleContent('change-password-content', loadChangePasswordForm)">Change Password</a> 
+       <a href="#" class="logout" onclick="logout()">Logout</a>
+    </div>
+    <h2 class="username">Welcome Admin, <span id="manager-username"></span>!</h2>
+    
+
+    <div class="content hidden" id="requests-content">
+        <h2>Show Requests</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Request Type</th>
+                    <th>Request Value</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="requests-table-body">
+                <!-- Requests will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content hidden" id="remove-resource-db-content">
+        <h2>Remove Resource from DB</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Resource Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="remove-resource-db-table-body">
+                <!-- Resources will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content hidden" id="add-resource-db-content">
+        <h2>Add Resource to DB</h2>
+        <form action="/uam/webapi/myresource/addresource" method="POST">
+            <label for="resourceName">Enter Resource Name:</label>
+            <input type="text" id="resourceName" name="resourceName" required>
+            <button type="submit" class="btn-green">Submit</button>
+        </form>
+        <div id="add-resource-response">
+            <!-- Server response will be shown here -->
+        </div>
+    </div>
+
+    <div class="content hidden" id="remove-resource-user-content">
+        <h2>Remove Resource from User</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Resource</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="remove-resource-user-table-body">
+                <!-- Data will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+  
+<div class="content hidden" id="check-users-resource-content">
+    <h2>Check Resources of a User</h2>
+    <form id="check-resources-form" onsubmit="checkResources(event)">
+        <label for="username">Enter Username:</label>
+        <input type="text" id="username" name="username" required>
+        <button type="submit" class="btn-green">Submit</button>
+    </form>
+    <div id="user-resources-content">
+        <!-- User resources will be loaded here -->
+    </div>
+</div>
+
+   <div class="content hidden" id="check-resources-user-content">
+    <h2>Check Users of a Resource</h2>
+    <form id="check-users-form" onsubmit="checkUsers(event)">
+        <label for="resourceName">Enter Resource Name:</label>
+        <input type="text" id="resourceName" name="resourceName" required>
+        <button type="submit" class="btn-green">Submit</button>
+    </form>
+    <div id="resource-users-content">
+        <!-- Resource users will be loaded here -->
+    </div>
+</div>
+
+    <div class="content hidden" id="view-users-content">
+        <h2>View Users</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Firstname</th>
+                    <th>Lastname</th>
+                    <th>Username</th>
+                    <th>ManagerID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="view-users-table-body">
+                <!-- User details will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+    
+ <div id="change-password-content" class="content hidden">
+        <!-- Content will be dynamically added by loadChangePasswordForm function -->
+    </div>
+    
+    <script>
+    
+	
+    function toggleContent(contentId, loadFunction = null) {
+        const contents = document.querySelectorAll('.content');
+        contents.forEach(content => {
+            if (content.id === contentId) {
+                content.classList.remove('hidden');
+                if (loadFunction) {
+                    loadFunction();
+                }
+            } else {
+                content.classList.add('hidden');
+            }
+        });
+    }
+    
+      
+        document.addEventListener('DOMContentLoaded', () => {
+            displayUsername();
+        });
+
+        function displayUsername() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+            if (username) {
+                document.getElementById('manager-username').textContent = username;
+                // Optionally set managerID in sessionStorage here if not set elsewhere
+                sessionStorage.setItem('managerID', username); // Assuming username is being used as managerID
+            } else {
+                document.getElementById('manager-username').textContent = 'Admin'; // Default text
+            }
+        }
+        async function loadRequests() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/requests');
+                
+                if (response.status === 401) { // Unauthorized
+                    const result = await response.json();
+                    if (result.redirect) {
+                        window.location.href = result.url; // Redirect to the specified URL
+                        return;
+                    }
+                }
+
+                const requests = await response.json();
+                console.log('Requests:', requests);
+
+                const tableBody = document.getElementById('requests-table-body');
+                tableBody.innerHTML = ''; // Clear existing content
+
+                requests.forEach(request => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${request.username}</td>
+                        <td>${request.requestType}</td>
+                        <td>${request.requestValue}</td>
+                        <td>
+                            <form action="/uam/webapi/myresource/request/accept" method="POST" style="display:inline;">
+                                <input type="hidden" name="username" value="${request.username}">
+                                <input type="hidden" name="requestType" value="${request.requestType}">
+                                <input type="hidden" name="requestValue" value="${request.requestValue}">
+                                <button type="submit" class="accept-button">Accept</button>
+                            </form>
+                            <form action="/uam/webapi/myresource/request/reject" method="POST" style="display:inline;">
+                                <input type="hidden" name="username" value="${request.username}">
+                                <input type="hidden" name="requestType" value="${request.requestType}">
+                                <input type="hidden" name="requestValue" value="${request.requestValue}">
+                                <button type="submit" class="reject-button">Reject</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading requests:', error);
+            }
+        }
+
+
+        async function loadRemoveResourceUser() {
+        	
+            try {
+                const response = await fetch('/uam/webapi/myresource/userresources');
+                if (response.status === 401) { // Unauthorized
+                    const result = await response.json();
+                    if (result.redirect) {
+                        window.location.href = result.url; // Redirect to the specified URL
+                        return;
+                    }
+                }
+                const userResources = await response.json();
+                
+
+                const tableBody = document.getElementById('remove-resource-user-table-body');
+                tableBody.innerHTML = '';
+
+                userResources.forEach(userResource => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${userResource.username}</td>
+                        <td>${userResource.resourceName}</td>
+                        <td>
+                            <form action="/webapi/myresource/resource/remove" method="POST" style="display:inline;">
+                                <input type="hidden" name="username" value="${userResource.username}">
+                                <input type="hidden" name="resourceName" value="${userResource.resourceName}">
+                                <button type="submit" class="reject-button">Remove</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading user resources:', error);
+            }
+        }
+
+        async function loadResources() {
+        	
+            try {
+                const response = await fetch('/uam/webapi/myresource/resources');
+                if (response.status === 401) { // Unauthorized
+                    const result = await response.json();
+                    if (result.redirect) {
+                        window.location.href = result.url; // Redirect to the specified URL
+                        return;
+                    }
+                }
+                const resources = await response.json();
+                
+
+                const tableBody = document.getElementById('remove-resource-db-table-body');
+                tableBody.innerHTML = ''; // Clear existing content
+
+                resources.forEach(resource => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${resource.resourceName}</td>
+                        <td>
+                            <form action="/uam/webapi/myresource/resource/delete" method="POST" style="display:inline;">
+                                <input type="hidden" name="resourceName" value="${resource.resourceName}">
+                                <button type="submit" class="reject-button">Remove</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading resources:', error);
+            }
+        }
+
+      
+        async function loadUsers() {
+            try {
+                const response = await fetch('/uam/webapi/myresource/users');
+                
+                if (response.status === 401) {
+                    // Handle unauthorized response (session expired or not logged in)
+                    alert('Session expired or not logged in. Please log in again.');
+                    // Optionally, redirect to login page
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Adjust URL as needed
+                    return;
+                }
+
+                const text = await response.text(); // Get response as text
+                console.log('Raw User Data:', text);
+
+                // Parse the user data
+                const users = parseUsers(text);
+                console.log('Parsed Users:', users);
+
+                const tableBody = document.getElementById('view-users-table-body');
+                tableBody.innerHTML = ''; // Clear existing content
+
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.firstname}</td>
+                        <td>${user.lastname}</td>
+                        <td>${user.username}</td>
+                        <td>${user.managerID}</td>
+                        <td>
+                            <form action="/uam/webapi/myresource/updateuser" method="POST" style="display:inline;">
+                                <input type="hidden" name="username" value="${user.username}">
+                                <input type="text" name="firstname" value="${user.firstname}" placeholder="First Name">
+                                <input type="text" name="lastname" value="${user.lastname}" placeholder="Last Name">
+                                <button type="submit" class="accept-button">Update</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function parseUsers(text) {
+        	
+            // Updated regex pattern to capture correctly and avoid overlapping with email, password, etc.
+            const userPattern = /User \[firstname=(.*?), lastname=(.*?), username=([^\s,]+),.*?managerID=(.*?)\]/g;
+            let match;
+            const users = [];
+
+            while ((match = userPattern.exec(text)) !== null) {
+                users.push({
+                    firstname: match[1],
+                    lastname: match[2],
+                    username: match[3],
+                    managerID: match[4] === "null" ? null : match[4] // Handle null values
+                });
+            }
+
+            return users;
+        }
+        
+        function loadAddResourceForm() {
+            const content = document.getElementById('add-resource-db-content');
+            content.innerHTML = `
+                <form id="add-resource-form" onsubmit="addResource(event)">
+                    <label for="resource-name">Resource Name:</label>
+                    <input type="text" id="resource-name" name="resourceName" required>
+                    <button type="submit" class="btn-green">Add Resource</button>
+                </form>
+                <div id="add-resource-response"></div>
+            `;
+        }
+
+        async function addResource(event) {
+            event.preventDefault(); // Prevent form from submitting the traditional way
+
+            const resourceName = document.getElementById('resource-name').value;
+            try {
+                const response = await fetch('/uam/webapi/myresource/addresource', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ resourceName })
+                });
+
+                if (response.status === 401) { // Unauthorized
+                    const result = await response.text();
+                    alert(result); // Show an alert with the session expired message
+                    window.location.href = "/uam/?message=Session expired, please login again."; // Redirect to the login page
+                    return;
+                }
+
+                const result = await response.text();
+                document.getElementById('add-resource-response').innerText = result;
+
+            } catch (error) {
+                console.error('Error adding resource:', error);
+                document.getElementById('add-resource-response').innerText = 'Failed to add resource.';
+            }
+        }
+        async function checkResources(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const username = document.getElementById('username').value;
+
+            try {
+                const response = await fetch('/uam/webapi/myresource/checkresources', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ username })
+                });
+
+                const text = await response.text();
+
+                if (response.status === 401) {
+                    const jsonResponse = JSON.parse(text);
+                    if (jsonResponse.redirect) {
+                        window.location.href = jsonResponse.url; // Redirect if session expired
+                    }
+                    return;
+                }
+
+                document.getElementById('user-resources-content').innerHTML = text;
+
+            } catch (error) {
+                console.error('Error checking resources:', error);
+                document.getElementById('user-resources-content').innerText = 'Failed to fetch resources.';
+            }
+        }
+
+        function logout() {
+            fetch('/uam/webapi/myresource/logout', {
+                method: 'POST',
+                credentials: 'include' // Ensure cookies (like session cookies) are sent with the request
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/uam';
+                    
+                    // Redirect to the home page or login page after logout
+                } else {
+                    console.error('Logout failed');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        async function checkUsers(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const resourceName = document.getElementById('resourceName').value;
+
+            try {
+                const response = await fetch('/uam/webapi/myresource/checkusers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ resourceName })
+                });
+
+                const text = await response.text();
+
+                if (response.status === 401) {
+                    const jsonResponse = JSON.parse(text);
+                    if (jsonResponse.redirect) {
+                        window.location.href = jsonResponse.url; // Redirect if session expired
+                    }
+                    return;
+                }
+
+                document.getElementById('resource-users-content').innerHTML = text;
+
+            } catch (error) {
+                console.error('Error checking users:', error);
+                document.getElementById('resource-users-content').innerText = 'Failed to fetch users.';
+            }
+        }
+        
+        function loadChangePasswordForm() {
+            const content = document.getElementById('change-password-content');
+            content.innerHTML = `
+                <form id="change-password-form" onsubmit="changePassword(event)">
+                    <label for="new-password">New Password:</label>
+                    <input type="password" id="new-password" name="newPassword" required>
+                    <label for="confirm-new-password">Confirm New Password:</label>
+                    <input type="password" id="confirm-new-password" name="confirmNewPassword" required>
+                    <button type="submit" class="btn-green">Submit</button>
+                </form>
+                <div id="change-password-response"></div>
+            `;
+        }
+
+        async function changePassword(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const newPassword = document.getElementById('new-password').value;
+            const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+            if (newPassword !== confirmNewPassword) {
+                document.getElementById('change-password-response').innerText = 'Passwords do not match.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/uam/webapi/myresource/changepassword', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ newPassword })
+                });
+
+                const text = await response.text();
+
+                if (response.status === 401) {
+                    const jsonResponse = JSON.parse(text);
+                    if (jsonResponse.redirect) {
+                        window.location.href = jsonResponse.url; // Redirect if session expired
+                    }
+                    return;
+                }
+
+                document.getElementById('change-password-response').innerHTML = text;
+
+            } catch (error) {
+                console.error('Error changing password:', error);
+                document.getElementById('change-password-response').innerText = 'Failed to change password.';
+            }
+        }
+
+    </script>
+</body>
+</html>
