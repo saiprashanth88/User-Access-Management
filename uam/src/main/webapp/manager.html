@@ -267,7 +267,7 @@
         <a href="#" onclick="toggleContent('addToTeam', loadAvailableUsers)">Add to Team</a>
         <a href="#" onclick="toggleContent('checkResources', fetchManagerResources)">Check Resources</a>
         <a href="#" onclick="toggleContent('requestResources', requestResources)">Request New Resources</a>
-        <a href="#" onclick="toggleContent('requestForManager')">Request For Admin</a>
+        <a href="#" onclick="toggleContent('requestForAdmin')">Request For Admin</a>
         <a href="#" onclick="toggleContent('accepted-resources', loadAccepted)">Check Approvals</a> 
         <a href="#" onclick="toggleContent('remove-resource-user-content', loadRemoveResourceUser)">Remove Own Resources</a>
         <a href="#change-password" onclick="toggleContent('change-password-content', loadChangePasswordForm)">Change Password</a> 
@@ -332,11 +332,16 @@
             </tbody>
         </table>
         </div>
-        	<div id="requestForManager" class="content hidden">
+        	<div id="requestForAdmin" class="content hidden">
             <div class="form-container">
                 <form action="webapi/myresource/requestRole" method="post">
-                    <input type="text" name="requestedRole" placeholder="Admin" required><br>
-                    <input type="submit" value="Request for Admin">
+                    <label for="role">Select Role:</label>
+				    <select id="role" name="requestedRole" required>
+				        <option value="" disabled selected>Select your role</option>
+				        <option value="Admin">Admin</option>
+				        <!-- Add more options here if needed -->
+				    </select><br>
+				    <input type="submit" value="Request Role">
                 </form>
             </div>
         </div>

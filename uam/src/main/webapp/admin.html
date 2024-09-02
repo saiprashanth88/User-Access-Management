@@ -207,8 +207,8 @@
             User</a>
         <a href="#check-users-resource"
    onclick="toggleContent('check-users-resource-content')">Check Resources of a User</a>
-        <a href="#check-resources-user"
-            onclick="toggleContent('check-resources-user-content')">Check Users of a Resource</a>
+        <!-- <a href="#check-resources-user"
+            onclick="toggleContent('check-resources-user-content')">Check Users of a Resource</a> -->
         <a href="#view-users" onclick="toggleContent('view-users-content', loadUsers)">View Users</a>
         <a href="/uam/addUser.jsp">Add User</a>
 <a href="#change-password" onclick="toggleContent('change-password-content', loadChangePasswordForm)">Change Password</a> 
@@ -427,7 +427,7 @@
                         <td>${userResource.username}</td>
                         <td>${userResource.resourceName}</td>
                         <td>
-                            <form action="/webapi/myresource/resource/remove" method="POST" style="display:inline;">
+                            <form action="/uam/webapi/myresource/resource/remove" method="POST" style="display:inline;">
                                 <input type="hidden" name="username" value="${userResource.username}">
                                 <input type="hidden" name="resourceName" value="${userResource.resourceName}">
                                 <button type="submit" class="reject-button">Remove</button>
@@ -513,6 +513,11 @@
                                 <input type="text" name="lastname" value="${user.lastname}" placeholder="Last Name">
                                 <button type="submit" class="accept-button">Update</button>
                             </form>
+                          
+                            <form action="/uam/webapi/myresource/removeUser" method="POST" style="display:inline;">
+                            <input type="hidden" name="username" value="${user.username}">
+                            <button type="submit" class="reject-button">Remove User</button>
+                        </form>
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -521,6 +526,7 @@
                 console.error('Error loading users:', error);
             }
         }
+        
 
         function parseUsers(text) {
         	
@@ -636,25 +642,25 @@
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({ resourceName })
                 });
+                const text = await response.text(); // Get the response text
 
-                const text = await response.text();
-
+                // Check if the response is unauthorized (401)
                 if (response.status === 401) {
-                    const jsonResponse = JSON.parse(text);
+                    const jsonResponse = await response.json(); // Parse the JSON response
                     if (jsonResponse.redirect) {
                         window.location.href = jsonResponse.url; // Redirect if session expired
                     }
-                    return;
+                    return; // Exit the function to prevent further execution
                 }
 
-                document.getElementById('resource-users-content').innerHTML = text;
+                document.getElementById('resource-users-content').innerHTML = text; // Display the content
 
             } catch (error) {
                 console.error('Error checking users:', error);
                 document.getElementById('resource-users-content').innerText = 'Failed to fetch users.';
             }
         }
-        
+
         function loadChangePasswordForm() {
             const content = document.getElementById('change-password-content');
             content.innerHTML = `

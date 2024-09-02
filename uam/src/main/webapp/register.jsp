@@ -65,7 +65,7 @@
             <input type="email" name="email" placeholder="Email" required><br>
             <input type="password" name="password" placeholder="Password" required><br>
             <input type="password" name="confirm_password" placeholder="Confirm Password" required><br>
-            <input type="text" name="passkey" placeholder="Passkey" required><br>
+            <input type="password" name="passkey" placeholder="Passkey" required><br>
             <input type="submit" value="Register">
         </form>
         <div class="message">

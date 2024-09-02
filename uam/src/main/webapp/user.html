@@ -297,13 +297,19 @@ table {
  	<div id="requestForManager" class="content hidden">
             <div class="form-container">
                 <form action="webapi/myresource/requestRole" method="post">
-                    <input type="text" name="requestedRole" placeholder="Manager/Admin" required><br>
-                    <input type="submit" value="Request for Manager/Admin">
+                    <label for="role">Select Role:</label>
+				    <select id="role" name="requestedRole" required>
+				        <option value="" disabled selected>Select your role</option>
+				        <option value="Manager">Manager</option>
+				        <option value="Admin">Admin</option>
+				        <!-- Add more options here if needed -->
+				    </select><br>
+				    <input type="submit" value="Request Role">
                 </form>
             </div>
         </div>
          <div id="accepted-resources" class="content hidden">
-           <h2>Your Accepted Resources</h2>
+           <h2>Your Requests</h2>
         <table>
             <thead>
                 <tr>

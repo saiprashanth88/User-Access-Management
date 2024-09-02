@@ -45,6 +45,10 @@ public class MyResource {
         else
             return "Not Connected!";
     }
+    public boolean isValidName(String name) {
+        return name != null && name.matches("^[a-zA-Z]+$");
+    }
+
     @POST
     @Path("register")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -56,7 +60,18 @@ public class MyResource {
                          @FormParam("confirm_password") String confirmPassword,
                          @FormParam("passkey") String passkey,
                          @Context HttpServletResponse response) throws IOException {
-        if (!password.equals(confirmPassword)) {
+        
+    	 // Validate firstname and lastname
+        if (!isValidName(firstname)) {
+            response.sendRedirect("/uam/register.jsp?message=First name should contain only alphabetic characters");
+            return;
+        }
+
+        if (!isValidName(lastname)) {
+            response.sendRedirect("/uam/register.jsp?message=Last name should contain only alphabetic characters");
+            return;
+        }
+    	if (!password.equals(confirmPassword)) {
             response.sendRedirect("/uam/register.jsp?message=Passwords do not match");
             return;
         }
@@ -162,7 +177,7 @@ public class MyResource {
     }
 
     private boolean isValidPassword(String password) {
-        if (password.length() < 6) {
+        if (password.length() < 8) {
             return false;
         }
 
@@ -323,40 +338,8 @@ public class MyResource {
                 response.sendRedirect("/uam/?message=Resource doesnot Exists");
             }
     }
-    @GET
-    @Path("requests")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getRequests(@Context HttpServletRequest request) {
-        List<Request> requests = new ArrayList<>();
-        try {
-            HttpSession session = request.getSession(false); // Use false to avoid creating a new session
-            if (session == null || session.getAttribute("username") == null) {
-                return Response.status(Response.Status.UNAUTHORIZED)
-                               .entity("{\"redirect\": true, \"url\": \"/uam/?message=Session expired, please login again.\"}")
-                               .build();
-            }
+    
 
-            try (Connection conn = SampleDb.connect()) {
-                String query = "SELECT * FROM requests WHERE status = 0";
-                try (PreparedStatement stmt = conn.prepareStatement(query);
-                     ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        String username = rs.getString("username");
-                        String requestType = rs.getString("request_type");
-                        String requestValue = rs.getString("request_value");
-                        boolean approved = rs.getBoolean("approved");
-                        requests.add(new Request(username, requestType, requestValue, approved));
-                    }
-                }
-            } catch (SQLException e) {
-                return Response.serverError().entity("Error fetching requests: " + e.getMessage()).build();
-            }
-        } catch (Exception e) {
-            return Response.serverError().entity("Unexpected error: " + e.getMessage()).build();
-        }
-
-        return Response.ok(requests).build();
-    }
 
 
     @GET
@@ -399,45 +382,167 @@ public class MyResource {
         return Response.ok(requests).build();
     }
     
-    
+    @GET
+    @Path("requests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getRequests(@Context HttpServletRequest request) {
+        List<Request> requests = new ArrayList<>();
+        try {
+            HttpSession session = request.getSession(false); // Use false to avoid creating a new session
+            if (session == null || session.getAttribute("username") == null) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                               .entity("{\"redirect\": true, \"url\": \"/uam/?message=Session expired, please login again.\"}")
+                               .build();
+            }
+            try (Connection conn = SampleDb.connect()) {
+                // Query to get all requests with status 0, excluding those made by admins
+                String query = "SELECT r.* " +
+                               "FROM requests r " +
+                               "JOIN details d ON r.username = d.username " +
+                               "WHERE r.status = 0 " +
+                               "AND d.user_type != 'admin'";
+                
+                try (PreparedStatement stmt = conn.prepareStatement(query);
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        String username = rs.getString("username");
+                        String requestType = rs.getString("request_type");
+                        String requestValue = rs.getString("request_value");
+                        boolean approved = rs.getBoolean("approved");
+                        requests.add(new Request(username, requestType, requestValue, approved));
+                    }
+                }
+            } catch (SQLException e) {
+                return Response.serverError().entity("Error fetching requests: " + e.getMessage()).build();
+            }
+        } catch (Exception e) {
+            return Response.serverError().entity("Unexpected error: " + e.getMessage()).build();
+        }
+
+        return Response.ok(requests).build();
+    }
+
     @POST
     @Path("request/accept")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response acceptRequest(@FormParam("username") String username,
                                   @FormParam("requestType") String requestType,
                                   @FormParam("requestValue") String requestValue) {
-        try (Connection conn = SampleDb.connect()) {
+        Connection conn = null;
+        boolean success = false;
+        
+        try {
+            conn = SampleDb.connect();
+            conn.setAutoCommit(false); // Start transaction
+
+            // Update request status
             String updateQuery = "UPDATE requests SET status = 1, approved = 1 WHERE username = ? AND request_type = ? AND request_value = ?";
             try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
                 stmt.setString(1, username);
                 stmt.setString(2, requestType);
                 stmt.setString(3, requestValue);
                 stmt.executeUpdate();
-                
-                // Additional logic for Role Request
-                if (requestType.equals("Role Request")) {
-                    String updateDetailsQuery = "UPDATE details SET user_type = ? WHERE username = ?";
-                    try (PreparedStatement updateStmt = conn.prepareStatement(updateDetailsQuery)) {
-                        updateStmt.setString(1, requestValue);
-                        updateStmt.setString(2, username);
-                        updateStmt.executeUpdate();
-                    }
+            }
+
+            // Additional logic for Role Request
+            if (requestType.equals("Role Request")) {
+                // Step 1: Update user type
+                String updateDetailsQuery = "UPDATE details SET user_type = ? WHERE username = ?";
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateDetailsQuery)) {
+                    updateStmt.setString(1, requestValue);
+                    updateStmt.setString(2, username);
+                    updateStmt.executeUpdate();
                 }
 
-                // Additional logic for Resource Request
-                if (requestType.equals("Resource Request")) {
-                    String insertQuery = "INSERT INTO user_resources (username, resource_name) VALUES (?, ?)";
-                    try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
-                        insertStmt.setString(1, username);
-                        insertStmt.setString(2, requestValue);
-                        insertStmt.executeUpdate();
+                // Step 2: Assign new manager only if the requestValue is "admin"
+                if (requestValue.equalsIgnoreCase("admin")) {
+                    String findOldestUserQuery = "SELECT username FROM details WHERE managerID = ? ORDER BY date ASC, username ASC LIMIT 1";
+                    String newManagerUsername = null;
+
+                    try (PreparedStatement findOldestStmt = conn.prepareStatement(findOldestUserQuery)) {
+                        findOldestStmt.setString(1, username);
+                        ResultSet rs = findOldestStmt.executeQuery();
+
+                        if (rs.next()) {
+                            newManagerUsername = rs.getString("username");
+                        }
+                    }
+
+                    if (newManagerUsername != null) {
+                        // Promote the oldest user to manager
+                        String promoteToManagerQuery = "UPDATE details SET user_type = 'manager' WHERE username = ?";
+                        try (PreparedStatement promoteStmt = conn.prepareStatement(promoteToManagerQuery)) {
+                            promoteStmt.setString(1, newManagerUsername);
+                            promoteStmt.executeUpdate();
+                        }
+
+                        // Update the managerID of the previous manager's team members
+                        String updateManagerIDQuery = "UPDATE details SET managerID = ? WHERE managerID = ?";
+                        try (PreparedStatement updateManagerIDStmt = conn.prepareStatement(updateManagerIDQuery)) {
+                            updateManagerIDStmt.setString(1, newManagerUsername);
+                            updateManagerIDStmt.setString(2, username);
+                            updateManagerIDStmt.executeUpdate();
+                        }
                     }
                 }
             }
+
+            // Additional logic for Resource Request
+            if (requestType.equals("Resource Request")) {
+                String insertQuery = "INSERT INTO user_resources (username, resource_name) VALUES (?, ?)";
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                    insertStmt.setString(1, username);
+                    insertStmt.setString(2, requestValue);
+                    insertStmt.executeUpdate();
+                }
+            }
+
+            // Commit transaction
+            conn.commit();
+            success = true; // Mark success
+            
+            // Fetch user's email
+            String userEmailQuery = "SELECT email FROM details WHERE username = ?";
+            String userEmail = null;
+            try (PreparedStatement emailStmt = conn.prepareStatement(userEmailQuery)) {
+                emailStmt.setString(1, username);
+                ResultSet rs = emailStmt.executeQuery();
+                if (rs.next()) {
+                    userEmail = rs.getString("email");
+                }
+            }
+
+            // Send notification email
+            if (userEmail != null) {
+                EmailService emailService = new EmailService();
+                String subject = "Your Request has been accepted";
+                String messageText = "Dear " + username + ",\n\nYour request of type '" + requestType + " : " + requestValue + "' has been successfully accepted.\n\nBest regards,\nYour Team";
+                emailService.sendEmail(userEmail, subject, messageText);
+            }
+
+            return Response.ok("Request accepted, and email notification sent.").build();
+            
         } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    if (!success) {
+                        conn.rollback(); // Rollback transaction if not successful
+                    }
+                } catch (SQLException rollbackEx) {
+                    return Response.serverError().entity("Error accepting request and rolling back: " + rollbackEx.getMessage()).build();
+                }
+            }
             return Response.serverError().entity("Error accepting request: " + e.getMessage()).build();
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close(); // Ensure connection is closed
+                } catch (SQLException e) {
+                    return Response.serverError().entity("Error closing connection: " + e.getMessage()).build();
+                }
+            }
         }
-        return Response.ok("Request accepted").build();
     }
 
     @POST
@@ -446,7 +551,12 @@ public class MyResource {
     public Response rejectRequest(@FormParam("username") String username,
                                   @FormParam("requestType") String requestType,
                                   @FormParam("requestValue") String requestValue) {
-        try (Connection conn = SampleDb.connect()) {
+        Connection conn = null;
+        try {
+            conn = SampleDb.connect();
+            conn.setAutoCommit(false); // Start transaction
+
+            // Update request status
             String updateQuery = "UPDATE requests SET status = 1, approved = 0 WHERE username = ? AND request_type = ? AND request_value = ?";
             try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
                 stmt.setString(1, username);
@@ -454,11 +564,52 @@ public class MyResource {
                 stmt.setString(3, requestValue);
                 stmt.executeUpdate();
             }
+
+            // Fetch user email
+            String emailQuery = "SELECT email FROM details WHERE username = ?";
+            String userEmail = null;
+            try (PreparedStatement emailStmt = conn.prepareStatement(emailQuery)) {
+                emailStmt.setString(1, username);
+                ResultSet rs = emailStmt.executeQuery();
+                if (rs.next()) {
+                    userEmail = rs.getString("email");
+                }
+            }
+
+            // Send email notification
+            if (userEmail != null) {
+                EmailService emailService = new EmailService();
+                String subject = "Request Rejected";
+                String message = "Dear " + username + ",\n\nYour request of type '" + requestType +" : "+requestValue+ "' has been rejected.\n\nBest regards,\nYour Team";
+                emailService.sendEmail(userEmail, subject, message);
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("User email not found").build();
+            }
+
+            conn.commit(); // Commit transaction
+            return Response.ok("Request rejected and notification sent").build();
+
         } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback(); // Rollback transaction in case of error
+                } catch (SQLException rollbackEx) {
+                    return Response.serverError().entity("Error rejecting request and rolling back: " + rollbackEx.getMessage()).build();
+                }
+            }
             return Response.serverError().entity("Error rejecting request: " + e.getMessage()).build();
+        } finally {
+            // Close the connection in the finally block
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    return Response.serverError().entity("Error closing connection: " + e.getMessage()).build();
+                }
+            }
         }
-        return Response.ok("Request rejected").build();
     }
+
 
     @GET
     @Path("resources")
@@ -629,41 +780,40 @@ public class MyResource {
 
         return Response.ok(responseHtml.toString()).build();
     }
+    @POST
+    @Path("checkusers")
+    @Consumes("application/x-www-form-urlencoded")
+    public Response checkUsers(@FormParam("resourceName") String resourceName) throws Exception {
+        List<String> users = new ArrayList<>();
+        try (Connection conn = SampleDb.connect()) {
+            String query = "SELECT username FROM user_resources WHERE resource_name = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, resourceName);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        users.add(rs.getString("username"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            return Response.serverError().entity("Error fetching users: " + e.getMessage()).build();
+        }
+ 
+        StringBuilder responseHtml = new StringBuilder("<h3>Users with resource: " + resourceName + "</h3>");
+        if (users.isEmpty()) {
+            responseHtml.append("<p>No users found with the specified resource.</p>");
+        } else {
+            responseHtml.append("<ul>");
+            for (String user : users) {
+                responseHtml.append("<li>").append(user).append("</li>");
+            }
+            responseHtml.append("</ul>");
+        }
+ 
+        // Return HTML content to be displayed on the same page
+        return Response.ok(responseHtml.toString()).build();
+    }
 
-   
-//    @GET
-//    @Path("users")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    public Response getUsers(@Context HttpServletRequest request) {
-//    	HttpSession session = request.getSession(false); // Use false to avoid creating a new session
-//        if (session == null || session.getAttribute("username") == null) {
-//            // Return a response indicating redirection
-//            return Response.status(Response.Status.UNAUTHORIZED)
-//                           .entity("REDIRECT:/uam/?message=Session expired, please login again.")
-//                           .build();
-//        }
-//        try (Connection conn = SampleDb.connect()) {
-//            String query = "SELECT firstname, lastname, username, managerID FROM details";
-//            try (PreparedStatement stmt = conn.prepareStatement(query);
-//                 ResultSet rs = stmt.executeQuery()) {
-//
-//                List<User> users = new ArrayList<>();
-//                while (rs.next()) {
-//                    String firstname = rs.getString("firstname");
-//                    String lastname = rs.getString("lastname");
-//                    String username = rs.getString("username");
-//                    String managerID = rs.getString("managerID");
-//                    
-//                    User user = new User(firstname, lastname, username, managerID);
-//                    users.add(user);
-//                }
-//                
-//                return Response.ok(users.toString()).build();
-//            }
-//        } catch (SQLException e) {
-//            return Response.serverError().entity("Database error: " + e.getMessage()).build();
-//        }
-//    }
     @GET
     @Path("users")
     @Produces(MediaType.TEXT_PLAIN)
@@ -677,7 +827,7 @@ public class MyResource {
             }
             
             try (Connection conn = SampleDb.connect()) {
-                String query = "SELECT firstname, lastname, username, managerID FROM details";
+            	String query = "SELECT firstname, lastname, username, managerID FROM details WHERE LOWER(user_type) != 'admin'";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
@@ -710,7 +860,7 @@ public class MyResource {
                          @Context HttpServletResponse response) throws IOException {
         
         try {
-        	String password = "12345";
+        	String password = firstname+lastname;
         	String passkey = "1234";
             User ob = new User(firstname, lastname, null, email, password,null,passkey);
             ob.registerUser();
@@ -765,9 +915,7 @@ public class MyResource {
             updateRequestsStmt.setString(2, oldUsername);
             updateRequestsStmt.executeUpdate();
 
-            // Commit the transaction
-            conn.commit();
-
+         
             return Response.ok("User updated successfully. New username: " + newUsername).build();
         } catch (SQLException e) {
             if (conn != null) {
@@ -810,30 +958,113 @@ public class MyResource {
             }
         }
     }
+    @POST
+    @Path("removeUser")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response removeUser(@FormParam("username") String username) {
 
-    
-//    @POST
-//    @Path("addresource")
-//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-//    public Response addResource(@FormParam("resourceName") String resourceName) {
-//        String insertResourceQuery = "INSERT INTO resources (resource_name) VALUES (?)";
-//
-//        try (Connection conn = SampleDb.connect();
-//             PreparedStatement stmt = conn.prepareStatement(insertResourceQuery)) {
-//
-//            stmt.setString(1, resourceName);
-//            int rowsAffected = stmt.executeUpdate();
-//
-//            if (rowsAffected > 0) {
-//                return Response.ok("Resource added successfully.").build();
-//            } else {
-//                return Response.serverError().entity("Failed to add resource.").build();
-//            }
-//
-//        } catch (SQLException e) {
-//            return Response.serverError().entity("Database error: " + e.getMessage()).build();
-//        }
-//    }
+        Connection conn = null;
+        PreparedStatement updateManagerIDStmt = null;
+        PreparedStatement deleteUserResourcesStmt = null;
+        PreparedStatement deleteRequestsStmt = null;
+        PreparedStatement insertDeletedStmt = null;
+        PreparedStatement deleteDetailsStmt = null;
+
+        try {
+            conn = SampleDb.connect();
+            conn.setAutoCommit(false); // Start transaction
+
+            // Step 1: Update managerID to NULL for users managed by the removed user
+            String updateManagerIDQuery = "UPDATE details SET managerID = NULL WHERE managerID = ?";
+            updateManagerIDStmt = conn.prepareStatement(updateManagerIDQuery);
+            updateManagerIDStmt.setString(1, username);
+            updateManagerIDStmt.executeUpdate();
+
+            // Step 2: Delete from the user_resources table
+            String deleteUserResourcesQuery = "DELETE FROM user_resources WHERE username = ?";
+            deleteUserResourcesStmt = conn.prepareStatement(deleteUserResourcesQuery);
+            deleteUserResourcesStmt.setString(1, username);
+            deleteUserResourcesStmt.executeUpdate();
+
+            // Step 3: Delete from the requests table
+            String deleteRequestsQuery = "DELETE FROM requests WHERE username = ?";
+            deleteRequestsStmt = conn.prepareStatement(deleteRequestsQuery);
+            deleteRequestsStmt.setString(1, username);
+            deleteRequestsStmt.executeUpdate();
+
+            // Step 4: Move data to the deleted table
+            String insertDeletedQuery = "INSERT INTO deleted (firstname, lastname, username, email, password, user_type, date, managerID, passkey) " +
+                                        "SELECT firstname, lastname, username, email, password, user_type, date, managerID, passkey FROM details WHERE username = ?";
+            insertDeletedStmt = conn.prepareStatement(insertDeletedQuery);
+            insertDeletedStmt.setString(1, username);
+            insertDeletedStmt.executeUpdate();
+
+            // Step 5: Delete from the details table
+            String deleteDetailsQuery = "DELETE FROM details WHERE username = ?";
+            deleteDetailsStmt = conn.prepareStatement(deleteDetailsQuery);
+            deleteDetailsStmt.setString(1, username);
+            deleteDetailsStmt.executeUpdate();
+
+            // Commit the transaction
+            conn.commit();
+
+            return Response.ok("User removed successfully and stored in deleted table.").build();
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback(); // Rollback in case of error
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return Response.serverError().entity("Failed to remove user: " + e.getMessage()).build();
+        } finally {
+            // Close resources in the finally block to ensure they're always closed
+            if (updateManagerIDStmt != null) {
+                try {
+                    updateManagerIDStmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (deleteUserResourcesStmt != null) {
+                try {
+                    deleteUserResourcesStmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (deleteRequestsStmt != null) {
+                try {
+                    deleteRequestsStmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (insertDeletedStmt != null) {
+                try {
+                    insertDeletedStmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (deleteDetailsStmt != null) {
+                try {
+                    deleteDetailsStmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     @POST
     @Path("addresource")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -937,6 +1168,7 @@ public class MyResource {
                 }
             }
         } catch (SQLException e) {
+        	
             e.printStackTrace(); 
         }
         return teamMembers;

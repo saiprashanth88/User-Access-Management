@@ -68,9 +68,9 @@
         <div class="message">
             <%= request.getParameter("message") != null ? request.getParameter("message") : "" %>
         </div>
-        <form action="/uam/admin.html">
+        <!-- <form action="/uam/admin.html">
             <button type="submit">Go Back</button>
-        </form>
+        </form> -->
         
     </div>
 </body>

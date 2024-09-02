@@ -101,6 +101,36 @@ public User(String password) {
 	    public void setManagerID(String managerID) {
 	        this.managerID = managerID;
 	    }
+	    private String fetchEmailFromDatabase(String username) {
+	        Connection conn = null;
+	        PreparedStatement stmt = null;
+	        ResultSet rs = null;
+
+	        try {
+	            conn = SampleDb.connect();
+	            String query = "SELECT email FROM details WHERE username = ?";
+	            stmt = conn.prepareStatement(query);
+	            stmt.setString(1, username);
+	            rs = stmt.executeQuery();
+
+	            if (rs.next()) {
+	                return rs.getString("email");
+	            } else {
+	                return null; // Or handle it in a way that fits your use case
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	            return null;
+	        } finally {
+	            try {
+	                if (rs != null) rs.close();
+	                if (stmt != null) stmt.close();
+	                if (conn != null) conn.close();
+	            } catch (SQLException e) {
+	                e.printStackTrace();
+	            }
+	        }
+	    }
 
 	   
 	    public String encryptPassword() {
@@ -189,6 +219,18 @@ public User(String password) {
 	                stmt.setString(8, passkey);
 	                stmt.executeUpdate();
 	            }
+	         // Send the email notification
+	            String subject = "Account Created Successfully";
+	            String messageText = "Dear " + firstname + " " + lastname + ",\n\n" +
+	                                 "Your account has been created successfully.\n" +
+	                                 "Username: " + username + "\n" +
+	                                 "Passkey: " + passkey + "\n\n" +
+	                                 "Please save your passkey for future reference.\n\n" +
+	                                 "Best regards,\n" +
+	                                 "Your Team";
+
+	            EmailService emailService = new EmailService();
+	            emailService.sendEmail(email, subject, messageText);
 	        } catch (SQLException e) {
 	            throw new RuntimeException("Registration failed: " + e.getMessage(), e);
 	        }
@@ -254,11 +296,12 @@ public User(String password) {
 	    }
 	    public void requestRole(String requestedRole) {
 	        try (Connection conn = SampleDb.connect()) {
+	        	String req = requestedRole.toLowerCase();
 	            String query = "INSERT INTO requests (username, request_type, request_value, status) VALUES (?, ?, ?, FALSE)";
 	            try (PreparedStatement stmt = conn.prepareStatement(query)) {
 	                stmt.setString(1, username);
 	                stmt.setString(2, "Role Request");
-	                stmt.setString(3, requestedRole);
+	                stmt.setString(3, req);
 	                stmt.executeUpdate();
 	            }
 	        } catch (SQLException e) {
